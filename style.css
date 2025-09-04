@@ -5,7 +5,7 @@
 }
 
 body {
-  background-color: #f0f0f0;
+  background-color: aqua;
 }
 
 main {
@@ -103,11 +103,11 @@ main {
 #calc {
   border-bottom-right-radius: 30px;
   color: white;
-  background-color: #ff9500;
+  background-color: steelblue;
 }
 
 #calc:hover {
-  background-color: #ffad33;
+  background-color: #4682b4;
 }
 
 #clearline, #clear, #back {
