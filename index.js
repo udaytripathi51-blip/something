@@ -10,7 +10,7 @@ function evaluate(a, operator, b) {
       result = a + b;
       break;
     case "-":
-      result = a + b;
+      result = a - b; // Fixed: was a + b
       break;
     case "*":
       result = a * b;
@@ -34,6 +34,19 @@ function clearSecondary(secondary) {
   if (!operations.includes(lastChar)) {
     secondary.value = "";
   }
+}
+
+function addToHistory(expression, result) {
+  secondaryDisplay.value = `${expression} = ${result}`;
+}
+
+function formatNumber(num) {
+  // Handle very large or very small numbers
+  if (Math.abs(num) > 1e10 || (Math.abs(num) < 1e-6 && num !== 0)) {
+    return num.toExponential(6);
+  }
+  // Round to avoid floating point precision issues
+  return Math.round(num * 1e10) / 1e10;
 }
 
 // --- ELEMENTS ---
@@ -66,29 +79,52 @@ let equalPressed = false;
 clearline.addEventListener("click", () => {
   mainDisplay.value = "";
 });
+
 clear.addEventListener("click", () => {
   mainDisplay.value = "";
   secondaryDisplay.value = "";
+  equalPressed = false;
 });
+
 back.addEventListener("click", () => {
+  if (equalPressed) return; // Don't allow backspace after equals
   mainDisplay.value = mainDisplay.value.slice(0, mainDisplay.value.length - 1);
 });
 
 //operations
 root.addEventListener("click", () => {
-  mainDisplay.value = Math.pow(Number(mainDisplay.value), 2);
+  let value = Number(mainDisplay.value);
+  if (value < 0) {
+    mainDisplay.value = "Error";
+    return;
+  }
+  mainDisplay.value = formatNumber(Math.sqrt(value)); // Fixed: was Math.pow(value, 2)
   clearSecondary(secondaryDisplay);
+  equalPressed = true;
 });
+
 reciprocal.addEventListener("click", () => {
-  mainDisplay.value = 1 / Number(mainDisplay.value);
+  let value = Number(mainDisplay.value);
+  if (value === 0) {
+    mainDisplay.value = "Error";
+    return;
+  }
+  mainDisplay.value = formatNumber(1 / value);
   clearSecondary(secondaryDisplay);
+  equalPressed = true;
 });
+
 square.addEventListener("click", () => {
-  mainDisplay.value = Math.pow(Number(mainDisplay.value), 2);
+  let value = Number(mainDisplay.value);
+  mainDisplay.value = formatNumber(Math.pow(value, 2));
   clearSecondary(secondaryDisplay);
+  equalPressed = true;
 });
+
 sign.addEventListener("click", () => {
-  mainDisplay.value = Number(mainDisplay.value);
+  let value = Number(mainDisplay.value);
+  mainDisplay.value = formatNumber(-value); // Fixed: now properly toggles sign
+  equalPressed = false;
 });
 
 // complex events
@@ -96,43 +132,52 @@ sign.addEventListener("click", () => {
 numbers.forEach((node) => {
   node.addEventListener("click", () => {
     if (equalPressed) {
-      clear.click();
+      mainDisplay.value = "";
+      secondaryDisplay.value = "";
+      equalPressed = false;
     }
 
-    text = node.textContent;
-    outputString = mainDisplay.value;
+    let text = node.textContent;
+    let outputString = mainDisplay.value;
 
-    if (text == "." && outputString.includes(".")) return;
+    // Prevent multiple decimal points
+    if (text === "." && outputString.includes(".")) return;
+    
+    // Prevent leading zeros (except for decimal numbers)
+    if (text === "0" && outputString === "0") return;
+    if (outputString === "0" && text !== ".") {
+      mainDisplay.value = text;
+      return;
+    }
 
     mainDisplay.value += text;
-
-    equalPressed = false;
   });
 });
 
 // operations
 calc.addEventListener("click", () => {
-  if (
-    !operations.includes(
-      secondaryDisplay.value.charAt(secondaryDisplay.value.length - 1)
-    )
-  )
-    return;
+  let operator = secondaryDisplay.value.charAt(secondaryDisplay.value.length - 1);
+  
+  if (!operations.includes(operator)) return;
 
-  let a = 0,
-    operator = "+",
-    b = Number(mainDisplay.value);
-
-  if (secondaryDisplay.value !== "") {
-    a = Number(
-      secondaryDisplay.value.slice(0, secondaryDisplay.value.length - 1)
-    );
-    operator = secondaryDisplay.value.charAt(secondaryDisplay.value.length - 1);
-  }
+  let a = Number(secondaryDisplay.value.slice(0, secondaryDisplay.value.length - 1));
+  let b = Number(mainDisplay.value);
+  let expression = `${a} ${operator} ${b}`;
 
   let result = evaluate(a, operator, b);
+  
+  // Handle division by zero
+  if (operator === "/" && b === 0) {
+    mainDisplay.value = "Error";
+    secondaryDisplay.value = "";
+    equalPressed = true;
+    return;
+  }
 
-  secondaryDisplay.value = mainDisplay.value;
+  result = formatNumber(result);
+  
+  // Fixed: Keep history in secondary display instead of overwriting
+  addToHistory(expression, result);
   mainDisplay.value = result;
 
   equalPressed = true;
@@ -141,24 +186,30 @@ calc.addEventListener("click", () => {
 operators.forEach((node) => {
   node.addEventListener("click", () => {
     let currentOperator = node.textContent === "x" ? "*" : node.textContent;
-    let operator = secondaryDisplay.value.charAt(
-      secondaryDisplay.value.length - 1
-    );
+    let operator = secondaryDisplay.value.charAt(secondaryDisplay.value.length - 1);
     let result;
 
+    // If there's no current operation or the last character isn't an operator
     if (!operations.includes(operator) || operator === "") {
       result = Number(mainDisplay.value);
     } else {
-      let a = Number(
-        secondaryDisplay.value.slice(0, secondaryDisplay.value.length - 1)
-      );
+      // Calculate the pending operation first
+      let a = Number(secondaryDisplay.value.slice(0, secondaryDisplay.value.length - 1));
       let b = Number(mainDisplay.value);
 
+      // Handle division by zero
+      if (operator === "/" && b === 0) {
+        mainDisplay.value = "Error";
+        secondaryDisplay.value = "";
+        return;
+      }
+
       result = evaluate(a, operator, b);
+      result = formatNumber(result);
+      mainDisplay.value = result;
     }
 
     equalPressed = false;
-
     secondaryDisplay.value = `${result}${currentOperator}`;
     mainDisplay.value = "";
   });
