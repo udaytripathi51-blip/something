@@ -59,7 +59,7 @@ main {
 .layout button {
   font-size: 1.3rem;
   border: none;
-  background-color: #404040;
+  background-color: #666;
   color: white;
   cursor: pointer;
   transition: all 0.2s ease;
