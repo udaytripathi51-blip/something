@@ -45,6 +45,10 @@ main {
   border: none;
   padding: 0 10px;
   font-size: 2rem;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
   background-color: #2a2a2a;
   color: white;
   background-color: #2a2a2a;
@@ -94,8 +98,6 @@ main {
 #read {
   font-size: 1.2rem;
   color: #888;
-  pointer-events: none;
-  user-select: text;
   border-top-right-radius: 30px;
   border-top-left-radius: 30px;
 }
