@@ -37,7 +37,7 @@ function clearSecondary(secondary) {
 }
 
 function addToHistory(expression, result) {
-  secondaryDisplay.value = `${expression} = ${result}`;
+  secondaryDisplay.value = `${expression} =`;
 }
 
 function formatNumber(num) {
@@ -176,7 +176,7 @@ calc.addEventListener("click", () => {
 
   result = formatNumber(result);
   
-  // Fixed: Keep history in secondary display instead of overwriting
+  // Keep history in secondary display and show result in main display
   addToHistory(expression, result);
   mainDisplay.value = result;
 
