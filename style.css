@@ -50,8 +50,6 @@ main {
 }
 
 #read {
-  user-select: none;
-  pointer-events: none;
   font-size: 1.2rem;
   color: #888;
 }
